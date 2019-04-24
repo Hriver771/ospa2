@@ -81,42 +81,6 @@ child_proc(int conn)
     recv_file(conn) ;
     shutdown(conn, SHUT_WR) ;
     send_file(conn, "recive.c") ;
-//    char buf[1024] ;
-//    char * data = 0x0, * orig = 0x0 ;
-//    int len = 0 ;
-//    int s ;
-//
-//    FILE *fp;
-//    fp = fopen("recive.c", "w");
-//
-//    while ( (s = recv(conn, buf, 1023, 0)) > 0 ) {
-//        buf[s] = 0x0 ;
-//        if (data == 0x0) {
-//            data = strdup(buf) ;
-//            len = s ;
-//        }
-//        else {
-//            data = realloc(data, len + s + 1) ;
-//            strncpy(data + len, buf, s) ;
-//            data[len + s] = 0x0 ;
-//            len += s ;
-//        }
-//
-//    }
-//
-//    fprintf(fp, "%s", data);
-//    printf(">%s\n", data) ;
-//
-//    fclose(fp);
-    
-//    orig = data ;
-//    while (len > 0 && (s = send(conn, data, len, 0)) > 0) {
-//        data += s ;
-//        len -= s ;
-//    }
-//    shutdown(conn, SHUT_WR) ;
-//    if (orig != 0x0)
-//        free(orig) ;
 }
 
 int
