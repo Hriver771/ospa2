@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <unistd.h>
 
 int
 main(int argc, char const *argv[])
@@ -13,6 +14,34 @@ main(int argc, char const *argv[])
     int s, len ;
     char buffer[1024] = {0};
     char * data ;
+    char * ip ;
+    int port ;
+    int sid ;
+    char *password ;
+    int c ;
+    char * ptr ;
+    char * file_name ;
+    
+    while( (c = getopt(argc, argv, "n:u:k: ")) != -1) {
+        switch (c) {
+            case 'n':
+                ptr = strtok(optarg, ":");
+                ip = (char *)malloc(sizeof(char)*strlen(ptr)) ;
+                strcpy(ip, ptr) ;
+                ptr = strtok(NULL, ":");
+                port = atoi(ptr) ;
+                break ;
+            case 'u':
+                sid = atoi(optarg) ;
+                break ;
+            case 'k':
+                password = optarg ;
+            default:
+                file_name = (char *)malloc(sizeof(char)*strlen(optarg)) ;
+                strcpy(file_name, optarg) ;
+                
+        }
+    }
     
     sock_fd = socket(AF_INET, SOCK_STREAM, 0) ;
     if (sock_fd <= 0) {
