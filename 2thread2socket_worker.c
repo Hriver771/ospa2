@@ -53,6 +53,19 @@ main(int argc, char const *argv[])
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
+    int port_number ;
+    int c ;
+    
+    while( (c = getopt(argc, argv, "p: ")) != -1) {
+        switch (c) {
+            case 'p':
+                port_number = atoi(optarg) ;
+                break;
+            default:
+                perror("wrong format : ");
+                exit(EXIT_FAILURE);
+        }
+    }
     
     char buffer[1024] = {0};
     
@@ -65,7 +78,7 @@ main(int argc, char const *argv[])
     memset(&address, '0', sizeof(address));
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY /* the localhost*/ ;
-    address.sin_port = htons(8090);
+    address.sin_port = htons(prot_number);
     if (bind(listen_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed : ");
         exit(EXIT_FAILURE);
