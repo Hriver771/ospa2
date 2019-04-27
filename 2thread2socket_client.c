@@ -9,11 +9,6 @@
 int
 main(int argc, char const *argv[])
 {
-    struct sockaddr_in serv_addr;
-    int sock_fd ;
-    int s, len ;
-    char buffer[1024] = {0};
-    char * data ;
     char * ip ;
     int port ;
     int sid ;
@@ -36,12 +31,18 @@ main(int argc, char const *argv[])
                 break ;
             case 'k':
                 password = optarg ;
-            default:
-                file_name = (char *)malloc(sizeof(char)*strlen(optarg)) ;
-                strcpy(file_name, optarg) ;
-                
         }
     }
+    file_name = (char *)malloc(sizeof(char)*strlen(optarg)) ;
+    strcpy(file_name, argv[optind]) ;
+    
+    printf("%d %s %s\n", sid, password, file_name) ;
+    
+    struct sockaddr_in serv_addr;
+    int sock_fd ;
+    int s, len ;
+    char buffer[1024] = {0};
+    char * data ;
     
     sock_fd = socket(AF_INET, SOCK_STREAM, 0) ;
     if (sock_fd <= 0) {
