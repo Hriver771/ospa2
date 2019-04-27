@@ -1,3 +1,5 @@
+//gcc 2thread2socket_server.c -o server
+//./server -p <Port> -w <IP>:<WPort> <Dir>
 #include <unistd.h> 
 #include <stdio.h> 
 #include <sys/socket.h> 
