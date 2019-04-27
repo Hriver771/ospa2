@@ -8,6 +8,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+int submitter_port ;
+char * worker_ip ;
+int worker_port ;
+char * file_dir ;
+
 void
 *socket_thread(void *arg)
 {
@@ -16,6 +21,7 @@ void
 	char * data = 0x0, * orig = 0x0 ;
 	int len = 0 ;
 	int s ;
+    
 
 	while ( (s = recv(conn, buf, 1023, 0)) > 0 ) {
 		buf[s] = 0x0 ;
@@ -56,8 +62,8 @@ void
     
     memset(&thread_serv_addr, '0', sizeof(thread_serv_addr));
     thread_serv_addr.sin_family = AF_INET;
-    thread_serv_addr.sin_port = htons(8090);
-    if (inet_pton(AF_INET, "127.0.0.1", &thread_serv_addr.sin_addr) <= 0) {
+    thread_serv_addr.sin_port = htons(worker_port);
+    if (inet_pton(AF_INET, worker_ip, &thread_serv_addr.sin_addr) <= 0) {
         perror("thread inet_pton failed : ") ;
         exit(EXIT_FAILURE) ;
     }
@@ -105,6 +111,29 @@ void
 int 
 main(int argc, char const *argv[]) 
 {
+    int c ;
+    char *p ;
+    
+    while( (c = getopt(argc, argv, "p:w: ")) != -1) {
+        switch (c) {
+            case 'p':
+                submitter_port = atoi(optarg) ;
+                break;
+            case 'w':
+                p = strtok(optarg, ":");
+                worker_ip = (char *)malloc(sizeof(char)*strlen(p)) ;
+                strcpy(worker_ip, p) ;
+                p = strtok(NULL, ":");
+                worker_port = atoi(p) ;
+                break ;
+                
+            default:
+                file_dir = (char *)malloc(sizeof(char)*strlen(optarg)) ;
+                strcpy(file_dir, optarg) ;
+                
+        }
+    }
+    
 	int listen_fd, new_socket ; 
 	struct sockaddr_in address; 
 	int opt = 1; 
@@ -121,7 +150,7 @@ main(int argc, char const *argv[])
 	memset(&address, '0', sizeof(address)); 
 	address.sin_family = AF_INET; 
 	address.sin_addr.s_addr = INADDR_ANY /* the localhost*/ ; 
-	address.sin_port = htons(8080); 
+	address.sin_port = htons(submitter_port);
 	if (bind(listen_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
 		perror("bind failed : "); 
 		exit(EXIT_FAILURE); 
