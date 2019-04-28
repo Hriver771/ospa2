@@ -15,7 +15,7 @@ int myDP(City *c, int num, int i);
 int main(){
 
   City *c;
-  FILE *fp = fopen("input2.txt", "r");
+  FILE *fp = fopen("2.in", "r");
   int num, link, buf = 0, first, second, max = 0;
 
   fscanf(fp, "%d %d", &num, &link);
@@ -25,17 +25,16 @@ int main(){
   for(int i=0; i < num; i++){
     c[i].num = i;
     c[i].neighbor = 0;
-    c[i].listN = (int*)malloc(sizeof(int)*(num-1));
-    for(int j=0; j < num; j++){
-      c[i].listN[j] = 0;
-    }
+    c[i].listN = (int*)malloc(sizeof(int)*(c[i].neighbor));
   }
-  for(int i=0; i < link; i++){
+  for(int i=0; i <= link; i++){
     fscanf(fp, "%d %d", &first, &second);
     c[first].neighbor++;
-    c[first].listN[second] = 1;
+    c[first].listN = (int*)realloc(c[first].listN, sizeof(int)*c[first].neighbor);
+    c[first].listN[ (c[first].neighbor) - 1 ] = second;
     c[second].neighbor++;
-    c[second].listN[first] = 1;
+    c[second].listN = (int*)realloc(c[second].listN, sizeof(int)*c[second].neighbor);
+    c[second].listN[ (c[second].neighbor) - 1 ] = first;
   }
 
   for(int i=0; i < num; i++){
@@ -52,19 +51,22 @@ int main(){
 
 int myDP(City *c, int num, int i){
 
-  int tmp = 0, min = i;
+  int tmp = 0, min = i, cnt = 1, miso = i;
 
-  for(int j = 0; j < num; j++){
-    if((c[i].listN[j] == 1) && (c[i].neighbor < c[j].neighbor)) {
-        tmp = j;
-        if(min == i) min = tmp;
-        if(c[tmp].neighbor < c[min].neighbor) min = tmp;
+  while(1){
+    for(int j = 0; j < c[miso].neighbor; j++){
+      if(c[miso].neighbor < c[ c[miso].listN[j] ].neighbor){
+        tmp = c[miso].listN[j];
+        if(min == miso) min = tmp;
+        else if(c[tmp].neighbor < c[min].neighbor) min = tmp;
+      }
+    }
+
+    if(min == miso){
+      return cnt;
+    } else{
+      cnt++;
+      miso = min;
     }
   }
-
-  if(min != i){
-    return 1 + myDP(c, num, min);
-  }
-
-  return 1;
 }
