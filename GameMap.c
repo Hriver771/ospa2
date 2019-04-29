@@ -1,14 +1,14 @@
 // 21500344 Chansol Suh
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 typedef struct _City{
   int num;
   int neighbor;
   int *listN;
 }City;
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int myDP(City *c, int num, int i);
 
