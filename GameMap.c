@@ -1,27 +1,24 @@
-// 21500344 Chansol Suh
-
-struct _City{
+struct City{
   int num;
   int neighbor;
   int *listN;
 };
 
-typedef struct _City City;
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int myDP(City *c, int num, int i);
+int myDP(struct City *c, int num, int i);
 
 int main(int argc, char* argv[]){
 
-  City *c;
+  struct City *c;
   int num, link, buf = 0, first, second, max = 0;
 
   scanf("%d %d", &num, &link);
 
-  c = (City*)malloc(sizeof(City)*num);
+  c = (struct City*)malloc(sizeof(struct City)*num);
 
   for(int i=0; i < num; i++){
     c[i].num = i;
@@ -49,7 +46,7 @@ int main(int argc, char* argv[]){
   return 0;
 }
 
-int myDP(City *c, int num, int i){
+int myDP(struct City *c, int num, int i){
 
   int tmp = 0, min = i, cnt = 1, miso = i;
 
