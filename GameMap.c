@@ -1,10 +1,12 @@
 // 21500344 Chansol Suh
 
-typedef struct _City{
+struct _City{
   int num;
   int neighbor;
   int *listN;
-}City;
+};
+
+typedef struct _City City;
 
 #include <stdio.h>
 #include <stdlib.h>
