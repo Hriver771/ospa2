@@ -1,4 +1,4 @@
-// 21500344 ¼­Âù¼Ö
+// 21500344 Chansol Suh
 
 #include <stdio.h>
 #include <stdlib.h>
