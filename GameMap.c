@@ -12,8 +12,6 @@ typedef struct _City{
 
 int myDP(City *c, int num, int i);
 
-#if 1
-
 int main(int argc, char* argv[]){
 
   City *c;
@@ -48,8 +46,6 @@ int main(int argc, char* argv[]){
   free(c);
   return 0;
 }
-
-#endif
 
 int myDP(City *c, int num, int i){
 
