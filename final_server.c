@@ -1,19 +1,16 @@
-//
-//  sampleworker.c
-//  
-//
-//  Created by 하민지 on 27/04/2019.
-//
-
-#include <unistd.h>
-#include <stdio.h>
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <unistd.h>
+#include <unistd.h> 
+#include <stdio.h> 
+#include <sys/socket.h> 
+#include <stdlib.h> 
+#include <netinet/in.h> 
+#include <string.h> 
 #include <pthread.h>
 #include <arpa/inet.h>
+
+int submitter_port ;
+char * worker_ip ;
+int worker_port ;
+char * file_dir ;
 
 void
 recv_file(int conn, char * file_name)
@@ -78,12 +75,6 @@ send_file( int conn, char * file_name )
     fclose( fp );
 }
 
-//char
-//*file_to_data(char * file_name)
-//{
-//
-//}
-
 char
 *recv_message(int conn)
 {
@@ -126,15 +117,23 @@ send_message(int conn, char * buffer)
 }
 
 void
-*new_thread(void *arg)
+*socket_thread(void *arg)
 {
     int conn = *((int *)arg);
-    data = recv_message(conn) ;
+//    char * data ;
+//    data = recv_message(conn) ;
+//    send_message(conn, data) ;
+//    shutdown(conn, SHUT_WR) ;
+//    free(data) ;
     
+    char * data = recv_message(conn) ;
     char * ptr;
     ptr = strtok(data, "-");
     char *sid = (char *)malloc(sizeof(char)*strlen(ptr)) ;
     strcpy(sid, ptr);
+    ptr = strtok(NULL, "-");
+    char * password = (char *)malloc(sizeof(char)*strlen(ptr)) ;
+    strcpy(password, ptr) ;
     ptr = strtok(NULL, "::-+_");
     
     FILE *fp;
@@ -145,91 +144,117 @@ void
     fprintf(fp, "%s", ptr);
     fclose(fp);
     
-    char * error_file_name = (char *)malloc(sizeof(char)*13) ;
-    strcpy(error_file_name, sid);
-    strcat(error_file_name, ".err") ;
+//    send_message(conn, sid) ;
+//    char * password = recv_message(conn) ;
+//    send_message(conn, password) ;
+//    recv_file(conn, strcat(sid, ".c")) ;
+    char str[] = "recived!\n" ;
+    send_message(conn, str) ;
+//    shutdown(conn, SHUT_WR) ;
+//
+    printf("%s %s\n", sid, password) ;
     
-    char * command = (char *)malloc(sizeof(char)*(strlen(code_file_name)+strlen(error_file_name) +9)) ;
-    strcpy( command, "gcc" ) ;
-    strcat( command, code_file_name ) ;
-    strcat( command, " &> " ) ;
-    strcat( command, error_file_name ) ;
     
-    strcpy("gcc ", code_file_name) ;
-    system("%s &> error", commad); -> 이렇게 하면 안될꺼 같은데 그냥 파일 열어서 확인하는게 좋을 듯.
-    if( fopen("error") != NULL ) {
-        send_file(conn, "error");
-        free(data) ;
-        free(command) ;
-        return ;
+    struct sockaddr_in thread_serv_addr;
+    int thread_sock_fd ;
+    char thread_buffer[1024] = {0};
+    
+    thread_sock_fd = socket(AF_INET, SOCK_STREAM, 0) ;
+    if (thread_sock_fd <= 0) {
+        perror("thread socket failed : ") ;
+        exit(EXIT_FAILURE) ;
     }
-    else {
-        for( int i=1; i<=10; i++ ) {
-            system( "cat %d.in | ./a.out > %d.out", i, i ) ;
-        }
-        
-        for( int i=1; i<=10; i++ ) {
-            send_file(conn, "%d.out", i) ;
-        }
-        shutdown(conn, SHUT_WR) ;
-        free(data) ;
-        free(command) ;
+    
+    memset(&thread_serv_addr, '0', sizeof(thread_serv_addr));
+    thread_serv_addr.sin_family = AF_INET;
+    thread_serv_addr.sin_port = htons(worker_port);
+    if (inet_pton(AF_INET, worker_ip, &thread_serv_addr.sin_addr) <= 0) {
+        perror("thread inet_pton failed : ") ;
+        exit(EXIT_FAILURE) ;
     }
+    
+    if (connect(thread_sock_fd, (struct sockaddr *) &thread_serv_addr, sizeof(thread_serv_addr)) < 0) {
+        perror("thread connect failed : ") ;
+        exit(EXIT_FAILURE) ;
+    }
+    
+    char *out_file_name = (char *)malloc(sizeof(char)*14) ;
+    strcpy(out_file_name, "out");
+    strcat(out_file_name, sid) ;
+    strcat(out_file_name, ".c") ;
+    printf("%s", out_file_name) ;
+    
+    send_message(thread_sock_fd, sid) ;
+    send_message(thread_sock_fd, "-") ;
+    send_file(thread_sock_fd, code_file_name);
+    shutdown(thread_sock_fd, SHUT_WR) ;
+    recv_file(thread_sock_fd, out_file_name) ;
+    send_file(conn, code_file_name) ;
+    shutdown(conn, SHUT_WR) ;
+    
 }
 
-int
-main(int argc, char const *argv[])
+int 
+main(int argc, char const *argv[]) 
 {
     int listen_fd, new_socket ;
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
-    int port_number ;
     int c ;
+    char *p ;
     
-    while( (c = getopt(argc, argv, "p: ")) != -1) {
+    while( (c = getopt(argc, argv, "p:w: ")) != -1) {
         switch (c) {
             case 'p':
-                port_number = atoi(optarg) ;
+                submitter_port = atoi(optarg) ;
                 break;
+            case 'w':
+                p = strtok(optarg, ":");
+                worker_ip = (char *)malloc(sizeof(char)*strlen(p)) ;
+                strcpy(worker_ip, p) ;
+                p = strtok(NULL, ":");
+                worker_port = atoi(p) ;
+                break ;
+                
             default:
-                perror("wrong format : ");
-                exit(EXIT_FAILURE);
+                file_dir = (char *)malloc(sizeof(char)*strlen(optarg)) ;
+                strcpy(file_dir, optarg) ;
+                
         }
     }
     
-    char buffer[1024] = {0};
-    
-    listen_fd = socket(AF_INET /*IPv4*/, SOCK_STREAM /*TCP*/, 0 /*IP*/) ;
-    if (listen_fd == 0)  {
-        perror("socket failed : ");
-        exit(EXIT_FAILURE);
-    }
-    
-    memset(&address, '0', sizeof(address));
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY /* the localhost*/ ;
-    address.sin_port = htons(port_number);
-    if (bind(listen_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("bind failed : ");
-        exit(EXIT_FAILURE);
-    }
+	char buffer[1024] = {0}; 
+
+	listen_fd = socket(AF_INET /*IPv4*/, SOCK_STREAM /*TCP*/, 0 /*IP*/) ;
+	if (listen_fd == 0)  { 
+		perror("socket failed : "); 
+		exit(EXIT_FAILURE); 
+	}
+	
+	memset(&address, '0', sizeof(address)); 
+	address.sin_family = AF_INET; 
+	address.sin_addr.s_addr = INADDR_ANY /* the localhost*/ ; 
+	address.sin_port = htons(submitter_port);
+	if (bind(listen_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+		perror("bind failed : "); 
+		exit(EXIT_FAILURE); 
+	}
     
     pthread_t tid[2];
-    int i = 0 ;
-    while (1) {
-        if (listen(listen_fd, 16 /* the size of waiting queue*/) < 0) {
-            perror("listen failed : ");
-            exit(EXIT_FAILURE);
-        }
-        
-        new_socket = accept(listen_fd, (struct sockaddr *) &address, (socklen_t*)&addrlen) ;
-        if (new_socket < 0) {
-            perror("accept");
-            exit(EXIT_FAILURE);
-        }
-        
-        if( pthread_create(&tid[i], NULL, new_thread, &new_socket) != 0 )
+    int i = 0;
+	while (1) {
+		if (listen(listen_fd, 16 /* the size of waiting queue*/) < 0) { 
+			perror("listen failed : "); 
+			exit(EXIT_FAILURE); 
+		} 
+
+		new_socket = accept(listen_fd, (struct sockaddr *) &address, (socklen_t*)&addrlen) ;
+		if (new_socket < 0) {
+			perror("accept"); 
+			exit(EXIT_FAILURE); 
+		}
+        if( pthread_create(&tid[i], NULL, socket_thread, &new_socket) != 0 )
             printf("Failed to create thread\n");
         if( i >= 2)
         {
@@ -240,5 +265,5 @@ main(int argc, char const *argv[])
             }
             i = 0;
         }
-    }
+	}
 }
